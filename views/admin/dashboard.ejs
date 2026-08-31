@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - ProjectLab Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">ProjectLab Control</div>
+      <div class="navbar-actions">
+        <form action="/logout" method="POST" style="display:inline;">
+          <button type="submit" class="btn-secondary">Logout</button>
+        </form>
+      </div>
+    </div>
+  </nav>
+
+  <main class="dashboard">
+    <div class="container">
+      <section class="dashboard-section">
+        <h2>Upload Project</h2>
+        <form action="/control-x7k9/projects" method="POST" enctype="multipart/form-data" class="upload-form">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="4" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="image">Image</label>
+            <input type="file" id="image" name="image" accept="image/*">
+          </div>
+
+          <div class="form-group">
+            <label for="zipFile">Project ZIP</label>
+            <input type="file" id="zipFile" name="zipFile" accept=".zip" required>
+          </div>
+
+          <button type="submit" class="btn-primary">Upload Project</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Projects</h2>
+        <div class="project-list">
+          <% if (projects.length === 0) { %>
+            <p class="empty-state">No projects uploaded yet</p>
+          <% } else { %>
+            <% projects.forEach(project => { %>
+              <div class="project-item">
+                <div class="project-info">
+                  <h3><%= project.title %></h3>
+                  <p><%= project.description.substring(0, 100) %><%= project.description.length > 100 ? '...' : '' %></p>
+                </div>
+                <div class="project-actions">
+                  <form action="/control-x7k9/projects/<%= project._id %>/edit" method="POST" enctype="multipart/form-data" style="display:inline;">
+                    <input type="text" name="title" value="<%= project.title %>" hidden>
+                    <input type="text" name="description" value="<%= project.description %>" hidden>
+                    <button type="submit" class="btn-secondary">Edit</button>
+                  </form>
+                  <form action="/control-x7k9/projects/<%= project._id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Delete this project?')">
+                    <button type="submit" class="btn-danger">Delete</button>
+                  </form>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Pending Accounts</h2>
+        <div class="user-list">
+          <% if (pendingUsers.length === 0) { %>
+            <p class="empty-state">No pending accounts</p>
+          <% } else { %>
+            <% pendingUsers.forEach(user => { %>
+              <div class="user-item">
+                <div class="user-info">
+                  <span class="username"><%= user.username %></span>
+                  <span class="date">Registered: <%= user.createdAt.toLocaleDateString() %></span>
+                </div>
+                <div class="user-actions">
+                  <form action="/control-x7k9/users/<%= user._id %>/approve" method="POST" style="display:inline;">
+                    <button type="submit" class="btn-success">Approve</button>
+                  </form>
+                  <form action="/control-x7k9/users/<%= user._id %>/reject" method="POST" style="display:inline;" onsubmit="return confirm('Reject this account?')">
+                    <button type="submit" class="btn-danger">Reject</button>
+                  </form>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
