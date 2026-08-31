@@ -9,28 +9,32 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const adminRoutes = require('./routes/admin');
-const { requireUser } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.set('trust proxy', 1);
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'fallback_secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: 'lax'
   }
 }));
 
@@ -73,6 +77,10 @@ app.use((err, req, res, next) => {
   res.status(500).render('500', { user: req.session.user || null });
 });
 
-app.listen(PORT, () => {
-  console.log(`ProjectLab running on port ${PORT}`);
-});
+module.exports = app;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`ProjectLab running on port ${PORT}`);
+  });
+}
