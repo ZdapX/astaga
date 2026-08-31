@@ -9,8 +9,7 @@ router.get('/login', (req, res) => {
     return res.redirect('/home');
   }
   res.render('auth/login', { 
-    error: null, 
-    user: null 
+    error: null
   });
 });
 
@@ -19,8 +18,7 @@ router.post('/login', async (req, res) => {
 
   if (!username || !password) {
     return res.render('auth/login', {
-      error: 'Username and password required',
-      user: null
+      error: 'Username and password required'
     });
   }
 
@@ -28,24 +26,21 @@ router.post('/login', async (req, res) => {
     const pendingUser = await PendingUser.findOne({ username });
     if (pendingUser) {
       return res.render('auth/login', {
-        error: 'Akun Anda masih menunggu persetujuan administrator',
-        user: null
+        error: 'Akun Anda masih menunggu persetujuan administrator'
       });
     }
 
     const user = await User.findOne({ username });
     if (!user) {
       return res.render('auth/login', {
-        error: 'Invalid username or password',
-        user: null
+        error: 'Invalid username or password'
       });
     }
 
     const validPassword = await bcrypt.compare(password, user.passwordHash);
     if (!validPassword) {
       return res.render('auth/login', {
-        error: 'Invalid username or password',
-        user: null
+        error: 'Invalid username or password'
       });
     }
 
@@ -58,8 +53,7 @@ router.post('/login', async (req, res) => {
     res.redirect('/home');
   } catch (err) {
     res.render('auth/login', {
-      error: 'Server error. Please try again.',
-      user: null
+      error: 'Server error. Please try again.'
     });
   }
 });
@@ -70,7 +64,7 @@ router.get('/register', (req, res) => {
   }
   res.render('auth/register', {
     error: null,
-    user: null
+    success: null
   });
 });
 
@@ -80,21 +74,21 @@ router.post('/register', async (req, res) => {
   if (!username || !password || !confirmPassword) {
     return res.render('auth/register', {
       error: 'All fields are required',
-      user: null
+      success: null
     });
   }
 
   if (password.length < 6) {
     return res.render('auth/register', {
       error: 'Password must be at least 6 characters',
-      user: null
+      success: null
     });
   }
 
   if (password !== confirmPassword) {
     return res.render('auth/register', {
       error: 'Passwords do not match',
-      user: null
+      success: null
     });
   }
 
@@ -103,7 +97,7 @@ router.post('/register', async (req, res) => {
     if (existingUser) {
       return res.render('auth/register', {
         error: 'Username already exists',
-        user: null
+        success: null
       });
     }
 
@@ -111,7 +105,7 @@ router.post('/register', async (req, res) => {
     if (pendingUser) {
       return res.render('auth/register', {
         error: 'Username already registered and waiting for approval',
-        user: null
+        success: null
       });
     }
 
@@ -124,13 +118,12 @@ router.post('/register', async (req, res) => {
 
     res.render('auth/register', {
       error: null,
-      user: null,
       success: 'Registration successful. Please wait for admin approval.'
     });
   } catch (err) {
     res.render('auth/register', {
       error: 'Server error. Please try again.',
-      user: null
+      success: null
     });
   }
 });
