@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { put } = require('@vercel/blob');
 const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
 const User = require('../models/User');
@@ -39,7 +38,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024
+    fileSize: 10 * 1024 * 1024
   }
 });
 
@@ -101,28 +100,20 @@ router.post('/projects', requireAdmin, upload.fields([
   }
 
   try {
-    let imageUrl = '';
-    let zipUrl = '';
+    let imageData = '';
+    let zipData = '';
 
     if (req.files['image']) {
-      const imageFile = req.files['image'][0];
-      const blob = await put(`images/${Date.now()}-${imageFile.originalname}`, imageFile.buffer, {
-        access: 'public'
-      });
-      imageUrl = blob.url;
+      imageData = req.files['image'][0].buffer.toString('base64');
     }
 
-    const zipFile = req.files['zipFile'][0];
-    const zipBlob = await put(`projects/${Date.now()}-${zipFile.originalname}`, zipFile.buffer, {
-      access: 'public'
-    });
-    zipUrl = zipBlob.url;
+    zipData = req.files['zipFile'][0].buffer.toString('base64');
 
     const project = new Project({
       title: title,
       description: description,
-      image: imageUrl,
-      zipFile: zipUrl
+      image: imageData,
+      zipFile: zipData
     });
 
     await project.save();
@@ -155,19 +146,11 @@ router.post('/projects/:id/edit', requireAdmin, upload.fields([
     project.updatedAt = new Date();
 
     if (req.files['image']) {
-      const imageFile = req.files['image'][0];
-      const blob = await put(`images/${Date.now()}-${imageFile.originalname}`, imageFile.buffer, {
-        access: 'public'
-      });
-      project.image = blob.url;
+      project.image = req.files['image'][0].buffer.toString('base64');
     }
 
     if (req.files['zipFile']) {
-      const zipFile = req.files['zipFile'][0];
-      const zipBlob = await put(`projects/${Date.now()}-${zipFile.originalname}`, zipFile.buffer, {
-        access: 'public'
-      });
-      project.zipFile = zipBlob.url;
+      project.zipFile = req.files['zipFile'][0].buffer.toString('base64');
     }
 
     await project.save();
@@ -186,11 +169,6 @@ router.post('/projects/:id/delete', requireAdmin, async (req, res) => {
   }
 
   try {
-    const project = await Project.findById(id);
-    if (!project) {
-      return res.status(404).send('Project not found');
-    }
-
     await Project.deleteOne({ _id: id });
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
