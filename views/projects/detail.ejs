@@ -31,7 +31,7 @@
         
         <div class="detail-image">
           <% if (project.image) { %>
-            <img src="/uploads/images/<%= project.image %>" alt="<%= project.title %>">
+            <img src="data:image/png;base64,<%= project.image %>" alt="<%= project.title %>">
           <% } else { %>
             <div class="placeholder-image-large">
               <span><%= project.title.charAt(0).toUpperCase() %></span>
