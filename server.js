@@ -15,15 +15,29 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 30000,
+const MONGODB_URI = process.env.MONGODB_URI;
+
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
-  connectTimeoutMS: 30000,
-  maxPoolSize: 10,
+  connectTimeoutMS: 10000,
+  maxPoolSize: 5,
   minPoolSize: 1,
+  keepAlive: true,
+  keepAliveInitialDelay: 300000
 })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB error:', err));
+.then(() => console.log('MongoDB connected'))
+.catch(err => {
+  console.error('MongoDB error:', err.message);
+});
+
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
 
 app.use(helmet({
   contentSecurityPolicy: false
@@ -66,24 +80,29 @@ app.get('/', (req, res) => {
 app.get('/home', async (req, res) => {
   try {
     const Project = require('./models/Project');
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const projects = await Project.find().sort({ createdAt: -1 }).maxTimeMS(30000);
     console.log('Projects found:', projects.length);
     res.render('home', {
       user: req.session.user || null,
       projects: projects
     });
   } catch (err) {
-    console.error('Home error:', err);
-    res.status(500).send('Server error');
+    console.error('Home error:', err.message);
+    if (err.message.includes('buffering timed out')) {
+      res.status(500).send('Database connection timeout. Please try again.');
+    } else {
+      res.status(500).send('Server error');
+    }
   }
 });
 
 app.get('/test-db', async (req, res) => {
   try {
     const Project = require('./models/Project');
-    const count = await Project.countDocuments();
-    const projects = await Project.find().limit(5);
+    const count = await Project.countDocuments().maxTimeMS(30000);
+    const projects = await Project.find().limit(5).maxTimeMS(30000);
     res.json({
+      status: 'connected',
       count: count,
       projects: projects.map(p => ({
         title: p.title,
@@ -93,8 +112,11 @@ app.get('/test-db', async (req, res) => {
       }))
     });
   } catch (err) {
-    console.error('Test DB error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('Test DB error:', err.message);
+    res.status(500).json({ 
+      status: 'error',
+      error: err.message 
+    });
   }
 });
 
