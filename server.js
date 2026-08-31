@@ -15,7 +15,13 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, {
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 30000,
+  maxPoolSize: 10,
+  minPoolSize: 1,
+})
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
 
@@ -87,6 +93,7 @@ app.get('/test-db', async (req, res) => {
       }))
     });
   } catch (err) {
+    console.error('Test DB error:', err);
     res.status(500).json({ error: err.message });
   }
 });
