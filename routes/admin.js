@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { put } = require('@vercel/blob');
 const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
 const User = require('../models/User');
@@ -12,24 +13,7 @@ const mongoose = require('mongoose');
 
 const ADMIN_PATH = process.env.ADMIN_PATH || '/control-x7k9';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let uploadPath = 'public/uploads/';
-    if (file.fieldname === 'image') {
-      uploadPath += 'images/';
-    } else if (file.fieldname === 'zipFile') {
-      uploadPath += 'projects/';
-    }
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (file.fieldname === 'image') {
@@ -117,17 +101,35 @@ router.post('/projects', requireAdmin, upload.fields([
   }
 
   try {
+    let imageUrl = '';
+    let zipUrl = '';
+
+    if (req.files['image']) {
+      const imageFile = req.files['image'][0];
+      const blob = await put(`images/${Date.now()}-${imageFile.originalname}`, imageFile.buffer, {
+        access: 'public'
+      });
+      imageUrl = blob.url;
+    }
+
+    const zipFile = req.files['zipFile'][0];
+    const zipBlob = await put(`projects/${Date.now()}-${zipFile.originalname}`, zipFile.buffer, {
+      access: 'public'
+    });
+    zipUrl = zipBlob.url;
+
     const project = new Project({
       title: title,
       description: description,
-      image: req.files['image'] ? req.files['image'][0].filename : '',
-      zipFile: req.files['zipFile'][0].filename
+      image: imageUrl,
+      zipFile: zipUrl
     });
 
     await project.save();
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error(err);
+    res.status(500).send('Upload failed: ' + err.message);
   }
 });
 
@@ -153,29 +155,26 @@ router.post('/projects/:id/edit', requireAdmin, upload.fields([
     project.updatedAt = new Date();
 
     if (req.files['image']) {
-      if (project.image) {
-        const oldImagePath = path.join(__dirname, '../public/uploads/images', project.image);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
-      project.image = req.files['image'][0].filename;
+      const imageFile = req.files['image'][0];
+      const blob = await put(`images/${Date.now()}-${imageFile.originalname}`, imageFile.buffer, {
+        access: 'public'
+      });
+      project.image = blob.url;
     }
 
     if (req.files['zipFile']) {
-      if (project.zipFile) {
-        const oldZipPath = path.join(__dirname, '../public/uploads/projects', project.zipFile);
-        if (fs.existsSync(oldZipPath)) {
-          fs.unlinkSync(oldZipPath);
-        }
-      }
-      project.zipFile = req.files['zipFile'][0].filename;
+      const zipFile = req.files['zipFile'][0];
+      const zipBlob = await put(`projects/${Date.now()}-${zipFile.originalname}`, zipFile.buffer, {
+        access: 'public'
+      });
+      project.zipFile = zipBlob.url;
     }
 
     await project.save();
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error(err);
+    res.status(500).send('Edit failed: ' + err.message);
   }
 });
 
@@ -190,20 +189,6 @@ router.post('/projects/:id/delete', requireAdmin, async (req, res) => {
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).send('Project not found');
-    }
-
-    if (project.image) {
-      const imagePath = path.join(__dirname, '../public/uploads/images', project.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
-
-    if (project.zipFile) {
-      const zipPath = path.join(__dirname, '../public/uploads/projects', project.zipFile);
-      if (fs.existsSync(zipPath)) {
-        fs.unlinkSync(zipPath);
-      }
     }
 
     await Project.deleteOne({ _id: id });
