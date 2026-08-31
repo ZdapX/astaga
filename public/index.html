@@ -10,17 +10,17 @@
 <body>
   <main class="page-shell">
     <section class="auth-card" aria-label="Authentication">
-      <div class="brand-mark" aria-hidden="true">D</div>
+      <div class="brand-mark" aria-hidden="true">
+        <img src="/images/photo.svg" alt="DAPA logo">
+      </div>
       <div class="heading">
         <h1 id="title">Welcome back</h1>
         <p id="subtitle">Sign in to continue to your account.</p>
       </div>
-
       <div class="tabs" role="tablist" aria-label="Authentication mode">
         <button type="button" class="active" id="loginTab" role="tab" aria-selected="true">Sign in</button>
         <button type="button" id="registerTab" role="tab" aria-selected="false">Register</button>
       </div>
-
       <form id="authForm">
         <label class="field hidden" id="nameField">
           <span>Name</span>
@@ -29,7 +29,6 @@
             <input id="name" name="name" type="text" placeholder="Your name" autocomplete="name">
           </div>
         </label>
-
         <label class="field">
           <span>Email</span>
           <div class="input-wrap">
@@ -37,7 +36,6 @@
             <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
           </div>
         </label>
-
         <label class="field">
           <span>Password</span>
           <div class="input-wrap">
@@ -46,15 +44,12 @@
             <button type="button" class="show-button" id="showPassword">Show</button>
           </div>
         </label>
-
         <div class="form-row" id="loginOptions">
           <label class="remember"><input type="checkbox"> <span>Remember me</span></label>
           <button type="button" class="text-button" id="forgot">Forgot password?</button>
         </div>
-
         <button class="submit-button" type="submit" id="submitButton">Sign in</button>
       </form>
-
       <p class="status hidden" id="status" role="status"></p>
       <p class="footer-note">By continuing, you agree to the terms and privacy policy.</p>
     </section>
