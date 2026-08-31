@@ -23,8 +23,34 @@ app.use(helmet({
   contentSecurityPolicy: false
 }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.raw({ 
+  type: 'application/json', 
+  limit: '50mb' 
+}));
+
+app.use(express.json({ 
+  limit: '50mb' 
+}));
+
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '50mb' 
+}));
+
+app.use((req, res, next) => {
+  if (req.headers['content-type'] === 'application/octet-stream') {
+    let data = '';
+    req.on('data', chunk => {
+      data += chunk;
+    });
+    req.on('end', () => {
+      req.rawBody = data;
+      next();
+    });
+  } else {
+    next();
+  }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
