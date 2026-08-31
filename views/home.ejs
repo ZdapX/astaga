@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProjectLab</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">ProjectLab</div>
+      <div class="navbar-links">
+        <a href="/home">Projects</a>
+        <% if (user) { %>
+          <span class="navbar-user"><%= user.username %></span>
+          <form action="/logout" method="POST" style="display:inline;">
+            <button type="submit" class="btn-secondary">Logout</button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="btn-secondary">Login</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+
+  <main class="home">
+    <div class="container">
+      <header class="home-header">
+        <h1>Project Showcase</h1>
+        <p>Explore projects created by our community</p>
+      </header>
+
+      <div class="project-grid">
+        <% if (projects.length === 0) { %>
+          <p class="empty-state">No projects available yet</p>
+        <% } else { %>
+          <% projects.forEach(project => { %>
+            <div class="project-card">
+              <div class="project-image">
+                <% if (project.image) { %>
+                  <img src="/uploads/images/<%= project.image %>" alt="<%= project.title %>">
+                <% } else { %>
+                  <div class="placeholder-image">
+                    <span><%= project.title.charAt(0).toUpperCase() %></span>
+                  </div>
+                <% } %>
+              </div>
+              <div class="project-body">
+                <h3><%= project.title %></h3>
+                <p><%= project.description.substring(0, 80) %><%= project.description.length > 80 ? '...' : '' %></p>
+                <a href="/projects/<%= project._id %>" class="btn-primary">View</a>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
