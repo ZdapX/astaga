@@ -10,6 +10,8 @@ const PendingUser = require('../models/PendingUser');
 const Project = require('../models/Project');
 const mongoose = require('mongoose');
 
+const ADMIN_PATH = process.env.ADMIN_PATH || '/control-x7k9';
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let uploadPath = 'public/uploads/';
@@ -57,8 +59,6 @@ const upload = multer({
   }
 });
 
-const ADMIN_PATH = process.env.ADMIN_PATH || '/control-x7k9';
-
 router.get('/', (req, res) => {
   if (req.session.admin) {
     return res.redirect(`${ADMIN_PATH}/dashboard`);
@@ -81,7 +81,11 @@ router.post('/login', async (req, res) => {
   res.render('admin/login', { error: 'Invalid password' });
 });
 
-router.get('/dashboard', requireAdmin, async (req, res) => {
+router.get('/dashboard', async (req, res) => {
+  if (!req.session.admin) {
+    return res.redirect(ADMIN_PATH);
+  }
+
   try {
     const projects = await Project.find().sort({ createdAt: -1 });
     const pendingUsers = await PendingUser.find().sort({ createdAt: -1 });
