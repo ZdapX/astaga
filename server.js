@@ -1,23 +1,78 @@
+require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const path = require('path');
+const mongoose = require('mongoose');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+const authRoutes = require('./routes/auth');
+const projectRoutes = require('./routes/projects');
+const adminRoutes = require('./routes/admin');
+const { requireUser } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB error:', err));
+
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use('/api', limiter);
+
+app.use('/', authRoutes);
+app.use('/', projectRoutes);
+app.use(process.env.ADMIN_PATH || '/control-x7k9', adminRoutes);
+
+app.get('/', (req, res) => {
+  res.redirect('/home');
 });
 
-app.get('/{*splat}', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/home', async (req, res) => {
+  try {
+    const Project = require('./models/Project');
+    const projects = await Project.find().sort({ createdAt: -1 });
+    res.render('home', {
+      user: req.session.user || null,
+      projects: projects
+    });
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
 });
 
-if (require.main === module) {
-  app.listen(PORT, () => console.log(`DAPA running on port ${PORT}`));
-}
+app.use((req, res) => {
+  res.status(404).render('404', { user: req.session.user || null });
+});
 
-module.exports = app;
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).render('500', { user: req.session.user || null });
+});
+
+app.listen(PORT, () => {
+  console.log(`ProjectLab running on port ${PORT}`);
+});
