@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - ProjectLab</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span>ProjectLab Control</span>
+      </div>
+      <h1>Admin Access</h1>
+      <p class="auth-subtitle">Enter admin password</p>
+
+      <% if (error) { %>
+        <div class="auth-error"><%= error %></div>
+      <% } %>
+
+      <form action="/control-x7k9/login" method="POST" class="auth-form">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required autofocus>
+        </div>
+
+        <button type="submit" class="btn-primary">Continue</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
