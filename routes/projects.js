@@ -21,6 +21,7 @@ router.get('/projects/:id', async (req, res) => {
       project: project
     });
   } catch (err) {
+    console.error('Project detail error:', err);
     res.status(500).render('500', { user: req.session.user || null });
   }
 });
@@ -38,11 +39,16 @@ router.get('/projects/:id/download', async (req, res) => {
       return res.status(404).send('Project not found');
     }
 
+    if (!project.zipFile) {
+      return res.status(404).send('Zip file not found');
+    }
+
     const buffer = Buffer.from(project.zipFile, 'base64');
     res.set('Content-Type', 'application/zip');
     res.set('Content-Disposition', `attachment; filename="${project.title}.zip"`);
     res.send(buffer);
   } catch (err) {
+    console.error('Download error:', err);
     res.status(500).send('Server error');
   }
 });
