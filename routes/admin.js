@@ -81,8 +81,8 @@ router.get('/dashboard', async (req, res) => {
       adminPath: ADMIN_PATH
     });
   } catch (err) {
-    console.error('Dashboard error:', err);
-    res.status(500).send('Server error');
+    console.error('Dashboard error:', err.message);
+    res.status(500).send('Database timeout. Please try again.');
   }
 });
 
@@ -121,7 +121,7 @@ router.post('/projects', requireAdmin, upload.fields([
     console.log('Project saved:', project.title, project._id);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    console.error('Upload error:', err);
+    console.error('Upload error:', err.message);
     res.status(500).send('Upload failed: ' + err.message);
   }
 });
@@ -159,7 +159,7 @@ router.post('/projects/:id/edit', requireAdmin, upload.fields([
     console.log('Project updated:', project.title, project._id);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    console.error('Edit error:', err);
+    console.error('Edit error:', err.message);
     res.status(500).send('Edit failed: ' + err.message);
   }
 });
@@ -176,7 +176,7 @@ router.post('/projects/:id/delete', requireAdmin, async (req, res) => {
     console.log('Project deleted:', id);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    console.error('Delete error:', err);
+    console.error('Delete error:', err.message);
     res.status(500).send('Server error');
   }
 });
@@ -210,7 +210,7 @@ router.post('/users/:id/approve', requireAdmin, async (req, res) => {
     console.log('User approved:', pendingUser.username);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    console.error('Approve error:', err);
+    console.error('Approve error:', err.message);
     res.status(500).send('Server error');
   }
 });
@@ -230,7 +230,7 @@ router.post('/users/:id/reject', requireAdmin, async (req, res) => {
     await PendingUser.deleteOne({ _id: id });
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    console.error('Reject error:', err);
+    console.error('Reject error:', err.message);
     res.status(500).send('Server error');
   }
 });
