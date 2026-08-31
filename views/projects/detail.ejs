@@ -30,7 +30,7 @@
         <h1><%= project.title %></h1>
         
         <div class="detail-image">
-          <% if (project.image) { %>
+          <% if (project.image && project.image.length > 0) { %>
             <img src="data:image/png;base64,<%= project.image %>" alt="<%= project.title %>">
           <% } else { %>
             <div class="placeholder-image-large">
