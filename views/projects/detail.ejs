@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= project.title %> - ProjectLab</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">ProjectLab</div>
+      <div class="navbar-links">
+        <a href="/home">Projects</a>
+        <% if (user) { %>
+          <span class="navbar-user"><%= user.username %></span>
+          <form action="/logout" method="POST" style="display:inline;">
+            <button type="submit" class="btn-secondary">Logout</button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="btn-secondary">Login</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+
+  <main class="project-detail">
+    <div class="container">
+      <div class="detail-card">
+        <h1><%= project.title %></h1>
+        
+        <div class="detail-image">
+          <% if (project.image) { %>
+            <img src="/uploads/images/<%= project.image %>" alt="<%= project.title %>">
+          <% } else { %>
+            <div class="placeholder-image-large">
+              <span><%= project.title.charAt(0).toUpperCase() %></span>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="detail-description">
+          <h2>Description</h2>
+          <p><%= project.description %></p>
+        </div>
+
+        <div class="detail-actions">
+          <a href="/projects/<%= project._id %>/download" class="btn-primary">Download Project</a>
+          <a href="/home" class="btn-secondary">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
