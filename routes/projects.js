@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path');
 const router = express.Router();
 const Project = require('../models/Project');
 const mongoose = require('mongoose');
@@ -39,12 +38,10 @@ router.get('/projects/:id/download', async (req, res) => {
       return res.status(404).send('Project not found');
     }
 
-    const filePath = path.join(__dirname, '../public/uploads/projects', project.zipFile);
-    res.download(filePath, `${project.title}.zip`, (err) => {
-      if (err) {
-        res.status(404).send('File not found');
-      }
-    });
+    const buffer = Buffer.from(project.zipFile, 'base64');
+    res.set('Content-Type', 'application/zip');
+    res.set('Content-Disposition', `attachment; filename="${project.title}.zip"`);
+    res.send(buffer);
   } catch (err) {
     res.status(500).send('Server error');
   }
