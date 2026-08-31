@@ -39,7 +39,7 @@
             <div class="project-card">
               <div class="project-image">
                 <% if (project.image) { %>
-                  <img src="/uploads/images/<%= project.image %>" alt="<%= project.title %>">
+                  <img src="data:image/png;base64,<%= project.image %>" alt="<%= project.title %>">
                 <% } else { %>
                   <div class="placeholder-image">
                     <span><%= project.title.charAt(0).toUpperCase() %></span>
