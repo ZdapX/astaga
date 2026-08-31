@@ -81,6 +81,7 @@ router.get('/dashboard', async (req, res) => {
       adminPath: ADMIN_PATH
     });
   } catch (err) {
+    console.error('Dashboard error:', err);
     res.status(500).send('Server error');
   }
 });
@@ -117,9 +118,10 @@ router.post('/projects', requireAdmin, upload.fields([
     });
 
     await project.save();
+    console.log('Project saved:', project.title, project._id);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    console.error(err);
+    console.error('Upload error:', err);
     res.status(500).send('Upload failed: ' + err.message);
   }
 });
@@ -154,9 +156,10 @@ router.post('/projects/:id/edit', requireAdmin, upload.fields([
     }
 
     await project.save();
+    console.log('Project updated:', project.title, project._id);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
-    console.error(err);
+    console.error('Edit error:', err);
     res.status(500).send('Edit failed: ' + err.message);
   }
 });
@@ -170,8 +173,10 @@ router.post('/projects/:id/delete', requireAdmin, async (req, res) => {
 
   try {
     await Project.deleteOne({ _id: id });
+    console.log('Project deleted:', id);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
+    console.error('Delete error:', err);
     res.status(500).send('Server error');
   }
 });
@@ -202,8 +207,10 @@ router.post('/users/:id/approve', requireAdmin, async (req, res) => {
     });
 
     await PendingUser.deleteOne({ _id: id });
+    console.log('User approved:', pendingUser.username);
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
+    console.error('Approve error:', err);
     res.status(500).send('Server error');
   }
 });
@@ -216,9 +223,14 @@ router.post('/users/:id/reject', requireAdmin, async (req, res) => {
   }
 
   try {
+    const pendingUser = await PendingUser.findById(id);
+    if (pendingUser) {
+      console.log('User rejected:', pendingUser.username);
+    }
     await PendingUser.deleteOne({ _id: id });
     res.redirect(`${ADMIN_PATH}/dashboard`);
   } catch (err) {
+    console.error('Reject error:', err);
     res.status(500).send('Server error');
   }
 });
