@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
@@ -22,8 +21,10 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use(helmet({
   contentSecurityPolicy: false
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
