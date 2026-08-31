@@ -18,13 +18,11 @@ app.set('trust proxy', 1);
 const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
-  connectTimeoutMS: 10000,
+  connectTimeoutMS: 30000,
   maxPoolSize: 5,
-  minPoolSize: 1,
-  keepAlive: true,
-  keepAliveInitialDelay: 300000
+  minPoolSize: 1
 })
 .then(() => console.log('MongoDB connected'))
 .catch(err => {
@@ -88,10 +86,10 @@ app.get('/home', async (req, res) => {
     });
   } catch (err) {
     console.error('Home error:', err.message);
-    if (err.message.includes('buffering timed out')) {
+    if (err.message && err.message.includes('buffering timed out')) {
       res.status(500).send('Database connection timeout. Please try again.');
     } else {
-      res.status(500).send('Server error');
+      res.status(500).send('Server error: ' + err.message);
     }
   }
 });
