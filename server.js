@@ -23,34 +23,8 @@ app.use(helmet({
   contentSecurityPolicy: false
 }));
 
-app.use(express.raw({ 
-  type: 'application/json', 
-  limit: '50mb' 
-}));
-
-app.use(express.json({ 
-  limit: '50mb' 
-}));
-
-app.use(express.urlencoded({ 
-  extended: true, 
-  limit: '50mb' 
-}));
-
-app.use((req, res, next) => {
-  if (req.headers['content-type'] === 'application/octet-stream') {
-    let data = '';
-    req.on('data', chunk => {
-      data += chunk;
-    });
-    req.on('end', () => {
-      req.rawBody = data;
-      next();
-    });
-  } else {
-    next();
-  }
-});
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -87,12 +61,33 @@ app.get('/home', async (req, res) => {
   try {
     const Project = require('./models/Project');
     const projects = await Project.find().sort({ createdAt: -1 });
+    console.log('Projects found:', projects.length);
     res.render('home', {
       user: req.session.user || null,
       projects: projects
     });
   } catch (err) {
+    console.error('Home error:', err);
     res.status(500).send('Server error');
+  }
+});
+
+app.get('/test-db', async (req, res) => {
+  try {
+    const Project = require('./models/Project');
+    const count = await Project.countDocuments();
+    const projects = await Project.find().limit(5);
+    res.json({
+      count: count,
+      projects: projects.map(p => ({
+        title: p.title,
+        id: p._id,
+        hasZip: !!p.zipFile,
+        zipLength: p.zipFile ? p.zipFile.length : 0
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
