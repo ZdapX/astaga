@@ -70,9 +70,9 @@ router.get('/dashboard', async (req, res) => {
   }
 
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
-    const pendingUsers = await PendingUser.find().sort({ createdAt: -1 });
-    const users = await User.find().sort({ createdAt: -1 });
+    const projects = await Project.find().sort({ createdAt: -1 }).maxTimeMS(30000);
+    const pendingUsers = await PendingUser.find().sort({ createdAt: -1 }).maxTimeMS(30000);
+    const users = await User.find().sort({ createdAt: -1 }).maxTimeMS(30000);
 
     res.render('admin/dashboard', {
       projects: projects,
