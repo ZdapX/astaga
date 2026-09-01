@@ -9,6 +9,7 @@ const User = require('../models/User');
 const PendingUser = require('../models/PendingUser');
 const Project = require('../models/Project');
 const mongoose = require('mongoose');
+const connectDB = require('../config/db');
 
 const ADMIN_PATH = process.env.ADMIN_PATH || '/control-x7k9';
 
@@ -75,9 +76,10 @@ router.get('/dashboard', async (req, res) => {
   }
 
   try {
-    const projects = await Project.find().sort({ createdAt: -1 }).maxTimeMS(30000);
-    const pendingUsers = await PendingUser.find().sort({ createdAt: -1 }).maxTimeMS(30000);
-    const users = await User.find().sort({ createdAt: -1 }).maxTimeMS(30000);
+    await connectDB();
+    const projects = await Project.find().sort({ createdAt: -1 }).maxTimeMS(15000);
+    const pendingUsers = await PendingUser.find().sort({ createdAt: -1 }).maxTimeMS(15000);
+    const users = await User.find().sort({ createdAt: -1 }).maxTimeMS(15000);
 
     res.render('admin/dashboard', {
       projects: projects,
@@ -87,7 +89,11 @@ router.get('/dashboard', async (req, res) => {
     });
   } catch (err) {
     console.error('Dashboard error:', err.message);
-    res.status(500).send('Database timeout. Please try again.');
+    if (err.message && err.message.includes('buffering timed out')) {
+      res.status(500).send('Database timeout. Please refresh the page.');
+    } else {
+      res.status(500).send('Server error: ' + err.message);
+    }
   }
 });
 
@@ -106,6 +112,7 @@ router.post('/projects', requireAdmin, upload.fields([
   }
 
   try {
+    await connectDB();
     let imageData = '';
     let zipData = '';
 
@@ -143,6 +150,7 @@ router.post('/projects/:id/edit', requireAdmin, upload.fields([
   }
 
   try {
+    await connectDB();
     const project = await Project.findById(id);
     if (!project) {
       return res.status(404).send('Project not found');
@@ -177,6 +185,7 @@ router.post('/projects/:id/delete', requireAdmin, async (req, res) => {
   }
 
   try {
+    await connectDB();
     await Project.deleteOne({ _id: id });
     console.log('Project deleted:', id);
     res.redirect(`${ADMIN_PATH}/dashboard`);
@@ -198,6 +207,7 @@ router.post('/users/:id/approve', async (req, res) => {
   }
 
   try {
+    await connectDB();
     const pendingUser = await PendingUser.findById(id);
     if (!pendingUser) {
       return res.status(404).send('Pending user not found');
@@ -236,6 +246,7 @@ router.post('/users/:id/reject', async (req, res) => {
   }
 
   try {
+    await connectDB();
     const pendingUser = await PendingUser.findById(id);
     if (pendingUser) {
       console.log('User rejected:', pendingUser.username);
