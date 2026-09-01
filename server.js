@@ -33,7 +33,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     sameSite: 'lax'
   }
 }));
@@ -47,12 +47,21 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  res.locals.admin = req.session.admin || null;
+  next();
+});
+
 app.use('/', authRoutes);
 app.use('/', projectRoutes);
 app.use(process.env.ADMIN_PATH || '/control-x7k9', adminRoutes);
 
 app.get('/', (req, res) => {
-  res.redirect('/home');
+  if (req.session.user) {
+    return res.redirect('/home');
+  }
+  res.redirect('/login');
 });
 
 app.get('/home', async (req, res) => {
