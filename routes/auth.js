@@ -50,7 +50,12 @@ router.post('/login', async (req, res) => {
       role: user.role
     };
 
-    res.redirect('/home');
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+      }
+      res.redirect('/home');
+    });
   } catch (err) {
     res.render('auth/login', {
       error: 'Server error. Please try again.'
