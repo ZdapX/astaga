@@ -8,7 +8,7 @@ async function requireUser(req, res, next) {
 }
 
 async function requireAdmin(req, res, next) {
-  if (!req.session.admin) {
+  if (!req.session || !req.session.admin) {
     return res.redirect(process.env.ADMIN_PATH || '/control-x7k9');
   }
   next();
