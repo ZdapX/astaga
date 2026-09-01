@@ -2,9 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const mongoose = require('mongoose');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
@@ -15,27 +15,7 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 30000,
-  maxPoolSize: 5,
-  minPoolSize: 1
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => {
-  console.error('MongoDB error:', err.message);
-});
-
-mongoose.connection.on('error', err => {
-  console.error('MongoDB connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected');
-});
+connectDB();
 
 app.use(helmet({
   contentSecurityPolicy: false
@@ -77,9 +57,9 @@ app.get('/', (req, res) => {
 
 app.get('/home', async (req, res) => {
   try {
+    await connectDB();
     const Project = require('./models/Project');
-    const projects = await Project.find().sort({ createdAt: -1 }).maxTimeMS(30000);
-    console.log('Projects found:', projects.length);
+    const projects = await Project.find().sort({ createdAt: -1 }).maxTimeMS(15000);
     res.render('home', {
       user: req.session.user || null,
       projects: projects
@@ -87,7 +67,7 @@ app.get('/home', async (req, res) => {
   } catch (err) {
     console.error('Home error:', err.message);
     if (err.message && err.message.includes('buffering timed out')) {
-      res.status(500).send('Database connection timeout. Please try again.');
+      res.status(500).send('Database connection timeout. Please refresh the page.');
     } else {
       res.status(500).send('Server error: ' + err.message);
     }
@@ -96,17 +76,16 @@ app.get('/home', async (req, res) => {
 
 app.get('/test-db', async (req, res) => {
   try {
+    await connectDB();
     const Project = require('./models/Project');
-    const count = await Project.countDocuments().maxTimeMS(30000);
-    const projects = await Project.find().limit(5).maxTimeMS(30000);
+    const count = await Project.countDocuments().maxTimeMS(15000);
+    const projects = await Project.find().limit(5).maxTimeMS(15000);
     res.json({
       status: 'connected',
       count: count,
       projects: projects.map(p => ({
         title: p.title,
-        id: p._id,
-        hasZip: !!p.zipFile,
-        zipLength: p.zipFile ? p.zipFile.length : 0
+        id: p._id
       }))
     });
   } catch (err) {
