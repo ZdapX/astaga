@@ -58,10 +58,15 @@ router.post('/login', async (req, res) => {
 
   if (password === process.env.ADMIN_PASSWORD) {
     req.session.admin = true;
-    return res.redirect(`${ADMIN_PATH}/dashboard`);
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+      }
+      return res.redirect(`${ADMIN_PATH}/dashboard`);
+    });
+  } else {
+    res.render('admin/login', { error: 'Invalid password' });
   }
-
-  res.render('admin/login', { error: 'Invalid password' });
 });
 
 router.get('/dashboard', async (req, res) => {
@@ -181,7 +186,11 @@ router.post('/projects/:id/delete', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/users/:id/approve', requireAdmin, async (req, res) => {
+router.post('/users/:id/approve', async (req, res) => {
+  if (!req.session.admin) {
+    return res.redirect(ADMIN_PATH);
+  }
+
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -215,7 +224,11 @@ router.post('/users/:id/approve', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/users/:id/reject', requireAdmin, async (req, res) => {
+router.post('/users/:id/reject', async (req, res) => {
+  if (!req.session.admin) {
+    return res.redirect(ADMIN_PATH);
+  }
+
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
